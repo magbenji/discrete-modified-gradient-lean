@@ -1,0 +1,71 @@
+digraph DiscreteStability {
+  rankdir=TB; newrank=true; nodesep=0.25; ranksep=0.45; bgcolor="#ffffff"; pad=0.2;
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11, margin="0.12,0.05", color="#7d848c", fillcolor="#eef0ec", fontcolor="#1d2126"];
+  edge [color="#7d848c", arrowsize=0.6];
+  subgraph cluster_Basin { label="Basin.lean"; labeljust=l; style=rounded; color="#d6d8d2"; fontname="Courier"; fontsize=11; fontcolor="#5d646d";
+    "basin" [label=<<FONT FACE="Courier">basin</FONT><BR/><FONT POINT-SIZE="9">Thm 6.1</FONT>>, color="#8a5a12", fillcolor="#f6ead2", penwidth=1.6];
+  }
+  subgraph cluster_Stability { label="Stability.lean"; labeljust=l; style=rounded; color="#d6d8d2"; fontname="Courier"; fontsize=11; fontcolor="#5d646d";
+    "LocalHyp.continuousOn" [label=<<FONT FACE="Courier">LocalHyp.continuousOn</FONT>>];
+    "LocalHyp.continuousOn_grad" [label=<<FONT FACE="Courier">LocalHyp.continuousOn_grad</FONT>>];
+    "LocalHyp.grad_xbar_eq_zero" [label=<<FONT FACE="Courier">LocalHyp.grad_xbar_eq_zero</FONT>>];
+    "trap" [label=<<FONT FACE="Courier">trap</FONT>>];
+    "stable" [label=<<FONT FACE="Courier">stable</FONT><BR/><FONT POINT-SIZE="9">Thm 5.1(i)</FONT>>, color="#8a5a12", fillcolor="#f6ead2", penwidth=1.6];
+    "tendsto_of_weighted_ascent" [label=<<FONT FACE="Courier">tendsto_of_weighted_ascent</FONT>>];
+    "asympStable_weighted" [label=<<FONT FACE="Courier">asympStable_weighted</FONT><BR/><FONT POINT-SIZE="9">Cor 5.2</FONT>>, color="#8a5a12", fillcolor="#f6ead2", penwidth=1.6];
+    "asympStable" [label=<<FONT FACE="Courier">asympStable</FONT><BR/><FONT POINT-SIZE="9">Thm 5.1(ii)</FONT>>, color="#8a5a12", fillcolor="#f6ead2", penwidth=1.6];
+  }
+  subgraph cluster_Ascent { label="Ascent.lean"; labeljust=l; style=rounded; color="#d6d8d2"; fontname="Courier"; fontsize=11; fontcolor="#5d646d";
+    "ascent" [label=<<FONT FACE="Courier">ascent</FONT><BR/><FONT POINT-SIZE="9">Lemma 4.1</FONT>>, color="#8a5a12", fillcolor="#f6ead2", penwidth=1.6];
+    "ascent_step" [label=<<FONT FACE="Courier">ascent_step</FONT>>];
+    "segment_ge" [label=<<FONT FACE="Courier">segment_ge</FONT><BR/><FONT POINT-SIZE="9">(C3)</FONT>>, color="#8a5a12", fillcolor="#f6ead2", penwidth=1.6];
+    "step_mono" [label=<<FONT FACE="Courier">step_mono</FONT><BR/><FONT POINT-SIZE="9">(C1)</FONT>>, color="#8a5a12", fillcolor="#f6ead2", penwidth=1.6];
+    "step_weighted" [label=<<FONT FACE="Courier">step_weighted</FONT>>];
+    "step_strict" [label=<<FONT FACE="Courier">step_strict</FONT><BR/><FONT POINT-SIZE="9">(C2)</FONT>>, color="#8a5a12", fillcolor="#f6ead2", penwidth=1.6];
+  }
+  subgraph cluster_Basic { label="Basic.lean"; labeljust=l; style=rounded; color="#d6d8d2"; fontname="Courier"; fontsize=11; fontcolor="#5d646d";
+    "StepBound.hi_nonneg" [label=<<FONT FACE="Courier">StepBound.hi_nonneg</FONT>>];
+    "StepBound.psd" [label=<<FONT FACE="Courier">StepBound.psd</FONT>>];
+    "StepBound.inner_sq_le" [label=<<FONT FACE="Courier">StepBound.inner_sq_le</FONT>>];
+    "StepBound.hi_mul_inner_nonneg" [label=<<FONT FACE="Courier">StepBound.hi_mul_inner_nonneg</FONT>>];
+    "StepBound.norm_sq_le" [label=<<FONT FACE="Courier">StepBound.norm_sq_le</FONT>>];
+    "StepBound.norm_le" [label=<<FONT FACE="Courier">StepBound.norm_le</FONT>>];
+    "continuousOn_of_lip" [label=<<FONT FACE="Courier">continuousOn_of_lip</FONT>>];
+    "exists_pos_lower_bound" [label=<<FONT FACE="Courier">exists_pos_lower_bound</FONT>>];
+  }
+  "ascent" -> "StepBound.norm_sq_le";
+  "ascent_step" -> "ascent";
+  "segment_ge" -> "StepBound.hi_nonneg";
+  "segment_ge" -> "StepBound.psd";
+  "segment_ge" -> "ascent";
+  "step_mono" -> "segment_ge";
+  "step_weighted" -> "ascent_step";
+  "step_strict" -> "step_weighted";
+  "StepBound.inner_sq_le" -> "StepBound.psd";
+  "StepBound.hi_mul_inner_nonneg" -> "StepBound.hi_nonneg";
+  "StepBound.hi_mul_inner_nonneg" -> "StepBound.psd";
+  "StepBound.norm_sq_le" -> "StepBound.hi_mul_inner_nonneg";
+  "StepBound.norm_sq_le" -> "StepBound.inner_sq_le";
+  "StepBound.norm_sq_le" -> "StepBound.psd";
+  "StepBound.norm_le" -> "StepBound.hi_nonneg";
+  "StepBound.norm_le" -> "StepBound.norm_sq_le";
+  "basin" -> "continuousOn_of_lip";
+  "basin" -> "segment_ge";
+  "basin" -> "step_strict";
+  "basin" -> "tendsto_of_weighted_ascent";
+  "LocalHyp.continuousOn_grad" -> "continuousOn_of_lip";
+  "trap" -> "LocalHyp.continuousOn";
+  "trap" -> "LocalHyp.grad_xbar_eq_zero";
+  "trap" -> "StepBound.hi_nonneg";
+  "trap" -> "StepBound.norm_le";
+  "trap" -> "exists_pos_lower_bound";
+  "trap" -> "step_weighted";
+  "stable" -> "trap";
+  "tendsto_of_weighted_ascent" -> "exists_pos_lower_bound";
+  "asympStable_weighted" -> "LocalHyp.continuousOn";
+  "asympStable_weighted" -> "LocalHyp.continuousOn_grad";
+  "asympStable_weighted" -> "stable";
+  "asympStable_weighted" -> "tendsto_of_weighted_ascent";
+  "asympStable_weighted" -> "trap";
+  "asympStable" -> "asympStable_weighted";
+}

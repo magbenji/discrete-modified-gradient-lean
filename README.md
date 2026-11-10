@@ -21,6 +21,25 @@ no `sorry` and depends only on Lean's three standard axioms (`propext`, `Classic
 | Corollary 5.2 | `asympStable_weighted` | `Stability.lean` |
 | Theorem 6.1 | `basin` | `DiscreteStability/Basin.lean` |
 
+## Dependency graph
+
+An arrow from A to B means the proof of A cites B. The paper's results are highlighted, and
+boxes are grouped by file. Definitions and hypotheses (`StepBound`, `LocalHyp`, `IsOrbit`, ...)
+and Mathlib lemmas are left out.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/dependency-graph-dark.svg">
+  <img alt="Dependency graph of the Lean declarations" src="docs/dependency-graph.svg">
+</picture>
+
+Lemma 4.1 (`ascent`) underlies every result. Theorem 5.1 and Corollary 5.2 go through the
+trapping lemma `trap`, Theorem 6.1 uses (C2) and (C3), and Corollary 5.2 and Theorem 6.1 share
+the convergence argument `tendsto_of_weighted_ascent`. (C1) (`step_mono`) is proved for
+completeness but is not used by the other results.
+
+The graph is generated from the source by `python3 scripts/dependency_graph.py` (requires
+Graphviz), which also writes the Graphviz source to `docs/dependency-graph.dot`.
+
 ## How the paper's hypotheses are encoded
 
 * **Space.** A real inner product space `E` (for example `EuclideanSpace ℝ (Fin n)`).
