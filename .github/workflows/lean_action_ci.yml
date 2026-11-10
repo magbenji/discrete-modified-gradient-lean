@@ -1,0 +1,19 @@
+name: Lean build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+      - name: Check axioms (no sorry, only standard axioms)
+        run: |
+          lake env lean Axioms.lean | tee axioms.txt
+          test "$(grep -c 'depends on axioms' axioms.txt)" -eq 8
+          extra=$(grep -o '\[.*\]' axioms.txt | tr -d '[]' | tr ',' '\n' | tr -d ' ' | sort -u | grep -vxE 'propext|Classical\.choice|Quot\.sound' || true)
+          if [ -n "$extra" ]; then echo "Unexpected axioms: $extra"; exit 1; fi
