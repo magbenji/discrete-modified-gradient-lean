@@ -26,6 +26,9 @@ no `sorry` and depends only on Lean's three standard axioms (`propext`, `Classic
 An arrow from A to B means the proof of A cites B. The paper's results are highlighted, and
 boxes are grouped by file. Definitions and hypotheses (`StepBound`, `LocalHyp`, `IsOrbit`, ...)
 and Mathlib lemmas are left out.
+The [interactive version](https://magbenji.github.io/discrete-modified-gradient-lean/) lets you
+click a declaration to trace what it depends on and what depends on it, optionally shows the
+definitions too, and lists every declaration with links to its source line.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/dependency-graph-dark.svg">
@@ -37,8 +40,10 @@ trapping lemma `trap`, Theorem 6.1 uses (C2) and (C3), and Corollary 5.2 and The
 the convergence argument `tendsto_of_weighted_ascent`. (C1) (`step_mono`) is proved for
 completeness but is not used by the other results.
 
-The graph is generated from the source by `python3 scripts/dependency_graph.py` (requires
-Graphviz), which also writes the Graphviz source to `docs/dependency-graph.dot`.
+Both versions are generated from the source by `python3 scripts/dependency_graph.py`
+(requires Graphviz). It writes the static images and their Graphviz source
+(`docs/dependency-graph.dot`) and the interactive page `docs/index.html`, which GitHub Pages
+serves from the `docs/` folder.
 
 ## How the paper's hypotheses are encoded
 

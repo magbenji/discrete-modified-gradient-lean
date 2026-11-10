@@ -7,9 +7,15 @@ Mathlib names are ignored. An edge A -> B means the source of A mentions B.
 
 Usage (from the repository root, needs Graphviz `dot`):
     python3 scripts/dependency_graph.py
-Writes docs/dependency-graph.dot, docs/dependency-graph.svg and
-docs/dependency-graph-dark.svg (proof structure; definitions and hypotheses omitted).
+Writes
+  docs/dependency-graph.dot, docs/dependency-graph.svg, docs/dependency-graph-dark.svg
+      static proof-structure graph for the README (definitions and hypotheses omitted);
+  docs/index.html
+      interactive page served by GitHub Pages, built from
+      scripts/dependency_graph_template.html. Graphviz sizes the boxes with the fonts it finds,
+      so install Inter and JetBrains Mono first for a tidy result.
 """
+import json
 import glob
 import html
 import os
@@ -32,6 +38,17 @@ PAPER = {
     "basin": "Thm 6.1",
 }
 FILES = ["Basin", "Stability", "Ascent", "Basic"]  # top-to-bottom cluster order
+# Short descriptions shown under definitions in the interactive page.
+HYP = {
+    "StepBound": "Loewner bounds on P_k",
+    "LocalHyp": "H0 on ball",
+    "IsolatedMax": "H1",
+    "IsolatedCrit": "H2",
+    "IsOrbit": "iteration (Δ)",
+    "UniformlyStable": "definition",
+    "UniformlyAsympStable": "definition",
+}
+SOURCE_URL = "https://github.com/magbenji/discrete-modified-gradient-lean/blob/main/DiscreteStability/"
 
 THEMES = {
     "light": dict(bg="#ffffff", fg="#1d2126", muted="#5d646d", line="#d6d8d2", edge="#7d848c",
@@ -122,6 +139,70 @@ def to_dot(decls, th):
     return "\n".join(out) + "\n"
 
 
+def interactive_svg(decls, with_defs):
+    """SVG whose colours come from CSS classes, so the page can theme it."""
+    is_def = {d["name"]: d["kind"] in ("structure", "def") for d in decls}
+
+    def cls(n):
+        return "paper" if n in PAPER else ("defn" if is_def[n] else "lemma")
+
+    out = [
+        "digraph G {",
+        '  rankdir=TB; newrank=true; nodesep=0.25; ranksep=0.45; bgcolor="transparent"; fontname="Inter";',
+        '  node [shape=box, style="rounded,filled", fontname="Inter", margin="0.12,0.05", penwidth=1.2];',
+        "  edge [arrowsize=0.6, penwidth=1.0];",
+    ]
+    for f in FILES:
+        out.append(f'  subgraph cluster_{f} {{ label="{f}.lean"; fontname="JetBrains Mono"; fontsize=11; '
+                   'labeljust=l; style="rounded"; penwidth=1;')
+        for d in decls:
+            n = d["name"]
+            if d["file"] != f or (is_def[n] and not with_defs):
+                continue
+            lab = f'<<FONT FACE="JetBrains Mono, monospace" POINT-SIZE="11">{html.escape(n)}</FONT>'
+            sub = PAPER.get(n) or HYP.get(n)
+            if sub:
+                lab += f'<BR/><FONT POINT-SIZE="9">{html.escape(sub)}</FONT>'
+            out.append(f'    "{n}" [id="n-{n}", class="{cls(n)}", label={lab}>];')
+        out.append("  }")
+    for d in decls:
+        for t in d["deps"]:
+            if is_def[t] or is_def[d["name"]]:
+                if with_defs:
+                    out.append(f'  "{d["name"]}" -> "{t}" [id="e-{d["name"]}--{t}", class="dedge", style=dashed];')
+            else:
+                out.append(f'  "{d["name"]}" -> "{t}" [id="e-{d["name"]}--{t}", class="pedge"];')
+    out.append("}")
+    svg = subprocess.run(["dot", "-Tsvg"], input="\n".join(out), capture_output=True, text=True, check=True).stdout
+    svg = svg[svg.index("<svg"):]
+    svg = re.sub(r'<svg width="[^"]*" height="[^"]*"', '<svg role="img" aria-label="Dependency graph" class="graph"', svg, count=1)
+    svg = re.sub(r"<!--.*?-->\n?", "", svg, flags=re.S)
+    return re.sub(r"<title>[^<]*</title>", "", svg)
+
+
+def write_html(decls):
+    for d in decls:
+        d["usedby"] = sorted(x["name"] for x in decls if d["name"] in x["deps"])
+    rows = []
+    for f in reversed(FILES):
+        rows.append(f'<tr class="file"><td colspan="5">DiscreteStability/{f}.lean</td></tr>')
+        for d in sorted((d for d in decls if d["file"] == f), key=lambda d: d["line"]):
+            n = d["name"]
+            ref = f'<span class="ref">{PAPER[n]}</span>' if n in PAPER else ""
+            rows.append(
+                f'<tr><td class="n">{html.escape(n)}{ref}</td><td>{d["kind"]}</td>'
+                f'<td class="l"><a href="{SOURCE_URL}{f}.lean#L{d["line"]}" target="_blank" rel="noopener">{d["line"]}</a></td>'
+                f'<td class="d">{html.escape(", ".join(d["deps"])) or "—"}</td>'
+                f'<td class="d">{html.escape(", ".join(d["usedby"])) or "—"}</td></tr>')
+    data = [{k: d[k] for k in ("name", "file", "kind", "line", "deps", "usedby")} for d in decls]
+    page = open(os.path.join(ROOT, "scripts", "dependency_graph_template.html"), encoding="utf-8").read()
+    for key, val in (("__PROOFS__", interactive_svg(decls, False)), ("__FULL__", interactive_svg(decls, True)),
+                     ("__ROWS__", "\n".join(rows)), ("__DATA__", json.dumps(data, ensure_ascii=False)),
+                     ("__PAPER__", json.dumps(PAPER)), ("__GH__", SOURCE_URL)):
+        page = page.replace(key, val)
+    open(os.path.join(OUT, "index.html"), "w", encoding="utf-8").write(page)
+
+
 def main():
     decls = scan()
     os.makedirs(OUT, exist_ok=True)
@@ -131,7 +212,9 @@ def main():
             open(os.path.join(OUT, "dependency-graph.dot"), "w", encoding="utf-8").write(dot)
         svg = subprocess.run(["dot", "-Tsvg"], input=dot, capture_output=True, text=True, check=True).stdout
         open(os.path.join(OUT, f"dependency-graph{suffix}.svg"), "w", encoding="utf-8").write(svg)
-    print(f"{len(decls)} declarations; wrote docs/dependency-graph.dot, .svg, -dark.svg")
+    write_html(decls)
+    open(os.path.join(OUT, ".nojekyll"), "w").close()
+    print(f"{len(decls)} declarations; wrote docs/dependency-graph.dot, .svg, -dark.svg and docs/index.html")
 
 
 if __name__ == "__main__":

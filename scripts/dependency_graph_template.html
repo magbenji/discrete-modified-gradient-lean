@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Interactive dependency graph of the Lean 4 formalization of stability results for discrete modified-gradient systems.">
+<title>DiscreteStability Dependency Graph</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap">
+<style>
+/* Layout: a single reading column; the graph sits in a full-width scrollable well, the declaration table below it. */
+:root{
+  --bg:#f7f7f4; --surface:#ffffff; --fg:#1d2126; --muted:#5d646d; --line:#d6d8d2;
+  --accent:#2f5d8a; --accent-soft:#e3ecf5;
+  --paper:#8a5a12; --paper-soft:#f6ead2;
+  --lemma-soft:#eef0ec; --defn-soft:#ffffff;
+  --edge:#7d848c; --dim:.16;
+  --display:"Source Serif 4", Georgia, serif;
+  --body:Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#15181c; --surface:#1d2126; --fg:#e6e8ea; --muted:#9aa2ab; --line:#353b42;
+  --accent:#8db8e3; --accent-soft:#1f3346; --paper:#e4b464; --paper-soft:#3a2d17;
+  --lemma-soft:#262b31; --defn-soft:#1d2126; --edge:#8a929b; --dim:.18; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#15181c; --surface:#1d2126; --fg:#e6e8ea; --muted:#9aa2ab; --line:#353b42;
+  --accent:#8db8e3; --accent-soft:#1f3346; --paper:#e4b464; --paper-soft:#3a2d17;
+  --lemma-soft:#262b31; --defn-soft:#1d2126; --edge:#8a929b; --dim:.18; color-scheme:dark }
+html{color-scheme:light}
+@media (prefers-color-scheme: dark){html{color-scheme:dark}}
+body{margin:0;-webkit-text-size-adjust:100%;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.55}
+.wrap{max-width:1180px;margin:0 auto;padding-block:32px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
+header{display:grid;gap:8px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--display);font-weight:600;font-size:clamp(26px,4vw,36px);line-height:1.15;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-weight:600;font-size:22px;margin:0 0 4px}
+p{margin:0;max-width:68ch}
+a{color:var(--accent)}
+code{font-family:var(--mono);font-size:.9em}
+.controls{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{font:500 13px var(--body);color:var(--muted);background:none;border:0;padding:7px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--fg)}
+.graph .node:focus{outline:none}
+.seg button:focus-visible,.graph .node:focus-visible,.reset:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted);align-items:center}
+.sw{display:inline-block;width:14px;height:10px;border-radius:3px;vertical-align:-1px;margin-right:6px;border:1.2px solid var(--edge)}
+.sw.paper{background:var(--paper-soft);border-color:var(--paper)} .sw.lemma{background:var(--lemma-soft)} .sw.defn{background:var(--defn-soft);border-style:dashed}
+.ln{display:inline-block;width:22px;border-top:1.4px solid var(--edge);vertical-align:3px;margin-right:6px} .ln.dash{border-top-style:dashed}
+.well{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow-x:auto;padding:12px}
+.graph{display:block;width:100%;min-width:860px;height:auto}
+.graph text{fill:var(--fg);font-family:var(--body)}
+.graph .cluster path,.graph .cluster polygon{fill:none;stroke:var(--line)}
+.graph .cluster text{fill:var(--muted);font-family:var(--mono)}
+.graph .node{cursor:pointer;transition:opacity .15s}
+.graph .node path,.graph .node polygon{stroke:var(--edge);fill:var(--lemma-soft)}
+.graph .node.paper path,.graph .node.paper polygon{stroke:var(--paper);fill:var(--paper-soft);stroke-width:1.6}
+.graph .node.defn path,.graph .node.defn polygon{fill:var(--defn-soft);stroke-dasharray:4 3}
+.graph .node text:first-of-type{font-family:var(--mono)}
+.graph .edge{transition:opacity .15s}
+.graph .edge path{stroke:var(--edge)} .graph .edge polygon{stroke:var(--edge);fill:var(--edge)}
+.graph .edge.dedge path{opacity:.6}
+.graph.focus .node,.graph.focus .edge{opacity:var(--dim)}
+.graph.focus .on{opacity:1}
+.graph.focus .node.sel path,.graph.focus .node.sel polygon{stroke:var(--accent);stroke-width:2.4}
+.graph.focus .edge.on path{stroke:var(--accent);stroke-width:1.6}.graph.focus .edge.on polygon{stroke:var(--accent);fill:var(--accent)}
+.detail{display:grid;gap:6px;min-height:3.2em;font-size:14px;color:var(--muted)}
+.detail strong{color:var(--fg);font-family:var(--mono);font-weight:500}
+.reset{font:500 13px var(--body);background:none;border:1px solid var(--line);border-radius:6px;color:var(--fg);padding:3px 10px;cursor:pointer;margin-left:8px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:13.5px}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--muted);font-size:12px;letter-spacing:.04em;text-transform:uppercase;background:var(--bg)}
+tbody tr:last-child td{border-bottom:0}
+td.n{font-family:var(--mono);white-space:nowrap} td .ref{display:inline-block;font:500 11.5px var(--body);background:var(--paper-soft);color:var(--fg);border:1px solid var(--paper);border-radius:999px;padding:0 8px;margin-left:6px}
+td.l{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.d{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+tr.file td{background:var(--bg);font-family:var(--mono);font-size:12.5px;color:var(--fg);font-weight:500}
+.note{font-size:13.5px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.graph .node,.graph .edge{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Lean 4 · Mathlib</div>
+    <h1>DiscreteStability dependency graph</h1>
+    <p>How the declarations in <a href="https://github.com/magbenji/discrete-modified-gradient-lean" target="_blank" rel="noopener">discrete-modified-gradient-lean</a> use one another. An arrow from A to B means the proof of A cites B. The paper's main results are highlighted. Click any box to trace what it depends on and what depends on it.</p>
+  </header>
+
+  <section style="display:grid;gap:12px">
+    <div class="controls">
+      <div class="seg" role="group" aria-label="Graph view">
+        <button id="v-proofs" type="button" aria-pressed="true">Proof structure</button>
+        <button id="v-full" type="button" aria-pressed="false">With definitions</button>
+      </div>
+      <div class="legend">
+        <span><span class="sw paper"></span>Paper result</span>
+        <span><span class="sw lemma"></span>Supporting lemma</span>
+        <span><span class="sw defn"></span>Definition / hypothesis</span>
+        <span><span class="ln"></span>cites</span>
+        <span><span class="ln dash"></span>uses definition</span>
+      </div>
+    </div>
+    <div class="well" id="g-proofs">__PROOFS__</div>
+    <div class="well" id="g-full" hidden>__FULL__</div>
+    <div class="detail" id="detail" aria-live="polite">Select a declaration in the graph to see its file, line and direct dependencies.</div>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>All declarations</h2>
+    <p class="note">Line numbers link to the source on GitHub. The <code>v1.0</code> release cited in the paper is archived at <a href="https://doi.org/10.5281/zenodo.24118844" target="_blank" rel="noopener">doi:10.5281/zenodo.24118844</a>.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Declaration</th><th>Kind</th><th>Line</th><th>Cites</th><th>Cited by</th></tr></thead>
+      <tbody id="tbody">__ROWS__</tbody>
+    </table></div>
+    <p class="note">The graph is built by scanning each declaration's source for references to the other names in the project. Mathlib lemmas are not shown. Regenerate this page with <code>python3 scripts/dependency_graph.py</code>. <code>step_mono</code> (C1) has no users inside the project; it is stated for completeness, and Theorems 5.1 and 6.1 use the weighted and strict forms instead.</p>
+  </section>
+</div>
+
+<script>
+const DATA=__DATA__;
+const byName=Object.fromEntries(DATA.map(d=>[d.name,d]));
+const GH='__GH__';
+const PAPER=__PAPER__;
+let view='proofs', sel=null;
+function closure(start,dir,visible){const seen=new Set([start]);const st=[start];while(st.length){const n=st.pop();const next=dir==='down'?byName[n].deps:byName[n].usedby;for(const m of next){if(visible.has(m)&&!seen.has(m)){seen.add(m);st.push(m)}}}return seen}
+function apply(){
+  const root=document.getElementById('g-'+view); const svg=root.querySelector('svg');
+  document.querySelectorAll('.graph').forEach(s=>{s.classList.remove('focus');s.querySelectorAll('.on,.sel').forEach(e=>e.classList.remove('on','sel'))});
+  const det=document.getElementById('detail');
+  if(!sel||!svg.querySelector('[id="n-'+CSS.escape(sel)+'"]')){sel=null;det.textContent='Select a declaration in the graph to see its file, line and direct dependencies.';return}
+  const visible=new Set([...svg.querySelectorAll('.node')].map(n=>n.id.slice(2)));
+  const down=closure(sel,'down',visible), up=closure(sel,'up',visible);
+  const on=new Set([...down,...up]);
+  svg.classList.add('focus');
+  svg.querySelectorAll('.node').forEach(n=>{const k=n.id.slice(2);if(on.has(k))n.classList.add('on');if(k===sel)n.classList.add('sel')});
+  svg.querySelectorAll('.edge').forEach(e=>{const [a,b]=e.id.slice(2).split('--');if((down.has(a)&&down.has(b))||(up.has(a)&&up.has(b)))e.classList.add('on')});
+  const d=byName[sel]; const f=d.file+'.lean';
+  det.innerHTML='';
+  const l1=document.createElement('div');
+  l1.innerHTML='<strong></strong> '+(PAPER[sel]?'· '+PAPER[sel]+' ':'')+'· <a target="_blank" rel="noopener"></a> · '+(down.size-1)+' transitive dependencies, '+(up.size-1)+' dependents in this view ';
+  l1.querySelector('strong').textContent=sel; const a=l1.querySelector('a'); a.href=GH+f+'#L'+d.line; a.textContent=f+' line '+d.line;
+  const b=document.createElement('button');b.className='reset';b.type='button';b.textContent='Clear';b.onclick=()=>{sel=null;apply()};l1.appendChild(b);
+  const l2=document.createElement('div'); l2.textContent='Cites: '+(d.deps.join(', ')||'nothing in this project')+'.';
+  det.append(l1,l2);
+}
+document.querySelectorAll('.graph .node').forEach(n=>{n.setAttribute('tabindex','0');n.setAttribute('role','button');
+  const k=n.id.slice(2);n.setAttribute('aria-label',k);
+  const go=()=>{sel=(sel===k?null:k);apply()};
+  n.addEventListener('click',go);n.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}})});
+function setView(v){view=v;document.getElementById('g-proofs').hidden=v!=='proofs';document.getElementById('g-full').hidden=v!=='full';
+  document.getElementById('v-proofs').setAttribute('aria-pressed',v==='proofs');document.getElementById('v-full').setAttribute('aria-pressed',v==='full');apply()}
+document.getElementById('v-proofs').onclick=()=>setView('proofs');document.getElementById('v-full').onclick=()=>setView('full');
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&sel){sel=null;apply()}});
+</script>
+</body>
+</html>
