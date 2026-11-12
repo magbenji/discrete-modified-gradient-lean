@@ -3,8 +3,8 @@
 [![Lean build](https://github.com/magbenji/discrete-modified-gradient-lean/actions/workflows/lean_action_ci.yml/badge.svg)](https://github.com/magbenji/discrete-modified-gradient-lean/actions/workflows/lean_action_ci.yml)
 
 Machine-checked proofs (Lean 4 + Mathlib) of the core results of the manuscript
-*Stability of equilibria in discrete modified-gradient systems* by B. J. Ridenhour
-(submitted to the *Journal of Biological Dynamics*). Section, lemma and theorem numbers below
+*Stability of equilibria in discrete-time modified-gradient systems and the multivariate
+breeder's equation* by B. J. Ridenhour (submitted for publication). Section, lemma and theorem numbers below
 refer to that manuscript. Every theorem below compiles with
 no `sorry` and depends only on Lean's three standard axioms (`propext`, `Classical.choice`,
 `Quot.sound`).
