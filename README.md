@@ -1,11 +1,14 @@
 # Lean 4 formalization: discrete modified-gradient stability
 
+[![arXiv](https://img.shields.io/badge/arXiv-2611.14756-b31b1b.svg)](https://arxiv.org/abs/2611.14756)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24118844.svg)](https://doi.org/10.5281/zenodo.24118844)
 [![Lean build](https://github.com/magbenji/discrete-modified-gradient-lean/actions/workflows/lean_action_ci.yml/badge.svg)](https://github.com/magbenji/discrete-modified-gradient-lean/actions/workflows/lean_action_ci.yml)
 
 Machine-checked proofs (Lean 4 + Mathlib) of the core results of the manuscript
 *Stability of equilibria in discrete-time modified-gradient systems and the multivariate
-breeder's equation* by B. J. Ridenhour (submitted for publication). Section, lemma and theorem numbers below
-refer to that manuscript. Every theorem below compiles with
+breeder's equation* by B. J. Ridenhour
+([arXiv:2611.14756](https://arxiv.org/abs/2611.14756); submitted for publication). Section, lemma and theorem numbers below
+refer to that manuscript (arXiv v1). Every theorem below compiles with
 no `sorry` and depends only on Lean's three standard axioms (`propext`, `Classical.choice`,
 `Quot.sound`).
 
@@ -133,5 +136,13 @@ push; the badge at the top shows its latest result.
 
 ## Citation and license
 
-If you use this code, please cite the paper (see `CITATION.cff`). The code is released under the
+If you use this code, please cite the paper (see `CITATION.cff`):
+
+> B. J. Ridenhour, Stability of equilibria in discrete-time modified-gradient systems and the
+> multivariate breeder's equation, arXiv:2611.14756 [math.DS], 2026.
+> https://doi.org/10.48550/arXiv.2611.14756
+
+To cite the code itself, use the Zenodo archive: https://doi.org/10.5281/zenodo.24118844.
+
+The code is released under the
 Apache License 2.0 (see `LICENSE`), the same license as Mathlib.

@@ -14,3 +14,18 @@ keywords:
   - discrete dynamical systems
   - gradient systems
   - quantitative genetics
+preferred-citation:
+  type: article
+  title: "Stability of equilibria in discrete-time modified-gradient systems and the multivariate breeder's equation"
+  authors:
+    - family-names: Ridenhour
+      given-names: Benjamin J.
+      affiliation: University of Idaho
+  year: 2026
+  repository: arXiv
+  identifiers:
+    - type: other
+      value: "arXiv:2611.14756"
+      description: arXiv identifier
+  doi: 10.48550/arXiv.2611.14756
+  url: "https://arxiv.org/abs/2611.14756"
