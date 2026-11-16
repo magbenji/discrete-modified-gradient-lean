@@ -48,8 +48,10 @@ code{font-family:var(--mono);font-size:.9em}
 .sw{display:inline-block;width:14px;height:10px;border-radius:3px;vertical-align:-1px;margin-right:6px;border:1.2px solid var(--edge)}
 .sw.paper{background:var(--paper-soft);border-color:var(--paper)} .sw.lemma{background:var(--lemma-soft)} .sw.defn{background:var(--defn-soft);border-style:dashed}
 .ln{display:inline-block;width:22px;border-top:1.4px solid var(--edge);vertical-align:3px;margin-right:6px} .ln.dash{border-top-style:dashed}
-.well{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow-x:auto;padding:12px}
-.graph{display:block;width:100%;min-width:860px;height:auto}
+.well{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:auto;padding:12px;max-height:78vh}
+.graph{display:block;max-width:none;height:auto}
+.zoom{display:inline-flex;align-items:center;gap:6px}
+.zoom .pct{font:500 12.5px var(--mono);color:var(--muted);min-width:4.5ch;text-align:right}
 .graph text{fill:var(--fg);font-family:var(--body)}
 .graph .cluster path,.graph .cluster polygon{fill:none;stroke:var(--line)}
 .graph .cluster text{fill:var(--muted);font-family:var(--mono)}
@@ -87,7 +89,7 @@ tr.file td{background:var(--bg);font-family:var(--mono);font-size:12.5px;color:v
   <header>
     <div class="eyebrow">Lean 4 · Mathlib</div>
     <h1>DiscreteStability dependency graph</h1>
-    <p>How the declarations in <a href="https://github.com/magbenji/discrete-modified-gradient-lean" target="_blank" rel="noopener">discrete-modified-gradient-lean</a> use one another. An arrow from A to B means the proof of A cites B. The paper's main results are highlighted. Click any box to trace what it depends on and what depends on it.</p>
+    <p>How the declarations in <a href="https://github.com/magbenji/discrete-modified-gradient-lean" target="_blank" rel="noopener">discrete-modified-gradient-lean</a> use one another. An arrow from A to B means the proof of A cites B. The paper's main results are highlighted. Click any box to trace what it depends on and what depends on it. Use the zoom buttons (or Ctrl/⌘ + scroll) to resize the graph; it scrolls inside its frame.</p>
   </header>
 
   <section style="display:grid;gap:12px">
@@ -96,6 +98,13 @@ tr.file td{background:var(--bg);font-family:var(--mono);font-size:12.5px;color:v
         <button id="v-proofs" type="button" aria-pressed="true">Proof structure</button>
         <button id="v-full" type="button" aria-pressed="false">With definitions</button>
       </div>
+      <div class="seg zoom" role="group" aria-label="Zoom">
+        <button id="z-out" type="button" aria-label="Zoom out">−</button>
+        <button id="z-fit" type="button">Fit width</button>
+        <button id="z-one" type="button">100%</button>
+        <button id="z-in" type="button" aria-label="Zoom in">+</button>
+      </div>
+      <span class="zoom"><span class="pct" id="z-pct">70%</span></span>
       <div class="legend">
         <span><span class="sw paper"></span>Paper result</span>
         <span><span class="sw lemma"></span>Supporting lemma</span>
@@ -155,6 +164,20 @@ function setView(v){view=v;document.getElementById('g-proofs').hidden=v!=='proof
   document.getElementById('v-proofs').setAttribute('aria-pressed',v==='proofs');document.getElementById('v-full').setAttribute('aria-pressed',v==='full');apply()}
 document.getElementById('v-proofs').onclick=()=>setView('proofs');document.getElementById('v-full').onclick=()=>setView('full');
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&sel){sel=null;apply()}});
+// Zoom: the graph is drawn at its natural size (1 pt = 4/3 px) times `zoom`; the well scrolls.
+let zoom=1;
+function setZoom(z){zoom=Math.min(3,Math.max(0.2,z));
+  document.querySelectorAll('svg.graph').forEach(svg=>{const vb=svg.viewBox.baseVal;
+    svg.style.width=(vb.width*4/3*zoom)+'px';svg.style.height=(vb.height*4/3*zoom)+'px'});
+  document.getElementById('z-pct').textContent=Math.round(zoom*100)+'%'}
+function fitZoom(){const well=document.getElementById('g-'+view);const svg=well.querySelector('svg');
+  const vb=svg.viewBox.baseVal;setZoom((well.clientWidth-26)/(vb.width*4/3))}
+document.getElementById('z-in').onclick=()=>setZoom(zoom*1.25);
+document.getElementById('z-out').onclick=()=>setZoom(zoom/1.25);
+document.getElementById('z-one').onclick=()=>setZoom(1);
+document.getElementById('z-fit').onclick=fitZoom;
+document.querySelectorAll('.well').forEach(w=>w.addEventListener('wheel',e=>{if(e.ctrlKey||e.metaKey){e.preventDefault();setZoom(zoom*(e.deltaY<0?1.1:1/1.1))}},{passive:false}));
+setZoom(0.7);
 </script>
 </body>
 </html>

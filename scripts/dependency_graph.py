@@ -106,6 +106,26 @@ def scan():
     return decls
 
 
+def layout_invis(decls, shown, edges, width=4):
+    """Invisible edges that wrap each file's top-level boxes into rows of `width` and stack the
+    files vertically, so the interactive graph stays narrow and readable."""
+    real = [(a, b) for a, b in edges if a in shown and b in shown]
+    has_in = {b for _, b in real}
+    has_out = {a for a, _ in real}
+    out, prev_sinks = [], []
+    for f in FILES:
+        mine = [d["name"] for d in decls if d["file"] == f and d["name"] in shown]
+        tops = [n for n in mine if n not in has_in]
+        for i in range(len(tops) - width):
+            out.append(f'  "{tops[i]}" -> "{tops[i + width]}" [style=invis];')
+        for snk in prev_sinks:
+            for n in tops[:width]:
+                out.append(f'  "{snk}" -> "{n}" [style=invis];')
+        if mine:
+            prev_sinks = [n for n in mine if n not in has_out]
+    return out
+
+
 def to_dot(decls, th):
     is_def = {d["name"]: d["kind"] in ("structure", "def") for d in decls}
     out = [
@@ -165,13 +185,18 @@ def interactive_svg(decls, with_defs):
                 lab += f'<BR/><FONT POINT-SIZE="9">{html.escape(sub)}</FONT>'
             out.append(f'    "{n}" [id="n-{n}", class="{cls(n)}", label={lab}>];')
         out.append("  }")
+    drawn = []
     for d in decls:
         for t in d["deps"]:
             if is_def[t] or is_def[d["name"]]:
                 if with_defs:
                     out.append(f'  "{d["name"]}" -> "{t}" [id="e-{d["name"]}--{t}", class="dedge", style=dashed];')
+                    drawn.append((d["name"], t))
             else:
                 out.append(f'  "{d["name"]}" -> "{t}" [id="e-{d["name"]}--{t}", class="pedge"];')
+                drawn.append((d["name"], t))
+    shown = {d["name"] for d in decls if with_defs or not is_def[d["name"]]}
+    out += layout_invis(decls, shown, drawn)
     out.append("}")
     svg = subprocess.run(["dot", "-Tsvg"], input="\n".join(out), capture_output=True, text=True, check=True).stdout
     svg = svg[svg.index("<svg"):]
